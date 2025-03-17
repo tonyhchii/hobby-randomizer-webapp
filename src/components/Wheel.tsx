@@ -1,12 +1,13 @@
+import { Hobby } from "../models/types";
+
 interface WheelProps {
-  hobbies: string[];
+  hobbies: Hobby[];
   rotation: number;
   size?: number; // Optional size prop to adjust the wheel size
 }
 
 function Wheel({ hobbies, rotation, size = 400 }: WheelProps) {
-  const numSlices = hobbies.length;
-  const sliceAngle = 360 / numSlices;
+  const totalWeight = hobbies.reduce((sum, hobby) => sum + hobby.weight, 0);
 
   return (
     <div className="relative flex items-center justify-center">
@@ -23,37 +24,34 @@ function Wheel({ hobbies, rotation, size = 400 }: WheelProps) {
             transition: "transform 2s ease-out",
           }}
         >
-          {hobbies.map((hobby, index) => {
-            const startAngle = index * sliceAngle;
-            const endAngle = startAngle + sliceAngle;
+          {hobbies.reduce<React.JSX.Element[]>((acc, hobby, index) => {
+            const startAngle =
+              (acc.reduce((sum, el) => sum + el.props["data-weight"], 0) /
+                totalWeight) *
+              360;
+            const endAngle =
+              ((acc.reduce((sum, el) => sum + el.props["data-weight"], 0) +
+                hobby.weight) /
+                totalWeight) *
+              360;
             const x1 = 50 + 50 * Math.cos((Math.PI * startAngle) / 180);
             const y1 = 50 + 50 * Math.sin((Math.PI * startAngle) / 180);
             const x2 = 50 + 50 * Math.cos((Math.PI * endAngle) / 180);
             const y2 = 50 + 50 * Math.sin((Math.PI * endAngle) / 180);
 
-            // Adjust text position for 1 or 2 slices
-            let textX = (x1 + x2) / 2;
-            let textY = (y1 + y2) / 2;
-            let textRotation = startAngle + sliceAngle / 2;
+            // Determine if the slice angle is greater than 180 degrees
+            const isLargeArc = endAngle - startAngle > 180 ? 1 : 0;
 
-            if (numSlices === 1) {
-              textX = 50;
-              textY = 50;
-              textRotation = 0;
-            } else if (numSlices === 2) {
-              textX =
-                50 +
-                30 * Math.cos((Math.PI * (startAngle + sliceAngle / 2)) / 180);
-              textY =
-                50 +
-                30 * Math.sin((Math.PI * (startAngle + sliceAngle / 2)) / 180);
-              textRotation = startAngle + sliceAngle / 2;
-            }
+            // Calculate the midpoint for text positioning
+            const midAngle = (startAngle + endAngle) / 2;
+            const textX = 50 + 30 * Math.cos((Math.PI * midAngle) / 180);
+            const textY = 50 + 30 * Math.sin((Math.PI * midAngle) / 180);
 
-            return (
-              <g key={index}>
+            // Create a JSX element for the slice
+            const slice = (
+              <g key={index} data-weight={hobby.weight}>
                 <path
-                  d={`M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} Z`}
+                  d={`M50,50 L${x1},${y1} A50,50 0 ${isLargeArc},1 ${x2},${y2} Z`}
                   fill={`hsl(${(index * 137.5) % 360}, 80%, 60%)`}
                   stroke="white"
                   strokeWidth="0.5"
@@ -66,13 +64,16 @@ function Wheel({ hobbies, rotation, size = 400 }: WheelProps) {
                   fontWeight="bold"
                   textAnchor="middle"
                   alignmentBaseline="middle"
-                  transform={`rotate(${textRotation}, ${textX}, ${textY})`}
+                  transform={`rotate(${midAngle}, ${textX}, ${textY})`}
                 >
-                  {hobby}
+                  {hobby.name}
                 </text>
               </g>
             );
-          })}
+
+            // Add the slice to the accumulator
+            return [...acc, slice];
+          }, [])}
         </svg>
       </div>
 

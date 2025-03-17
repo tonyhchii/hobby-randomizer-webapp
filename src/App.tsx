@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import Wheel from "./components/Wheel";
+import { Hobby } from "./models/types";
 
 function App() {
-  const [hobbies, setHobbies] = useState<string[]>(() => {
+  const [hobbies, setHobbies] = useState<Hobby[]>(() => {
     const savedHobbies = localStorage.getItem("hobbies");
     return savedHobbies ? JSON.parse(savedHobbies) : [];
   });
@@ -17,7 +18,10 @@ function App() {
 
   const addHobby = (hobby: string) => {
     if (hobby.trim()) {
-      setHobbies((prevHobbies) => [...prevHobbies, hobby.trim()]);
+      setHobbies((prevHobbies) => [
+        ...prevHobbies,
+        { name: hobby.trim(), weight: 1 },
+      ]); // Default weight is 1
     }
   };
 
@@ -25,36 +29,80 @@ function App() {
     setHobbies((prevHobbies) => prevHobbies.filter((_, i) => i !== index));
   };
 
+  const updateHobbyWeight = (index: number, weight: number) => {
+    if (!isNaN(weight) && weight > 0) {
+      setHobbies((prevHobbies) =>
+        prevHobbies.map((hobby, i) =>
+          i === index ? { ...hobby, weight } : hobby
+        )
+      );
+    }
+  };
+
   const spinWheel = () => {
     if (hobbies.length === 0) return;
-    const spins = 5;
-    const randomIndex = Math.random() * hobbies.length;
-    const newRotation =
-      spins * 360 + (360 - randomIndex * (360 / hobbies.length)) + rotation;
+
+    // Calculate total weight
+    const totalWeight = hobbies.reduce((sum, hobby) => sum + hobby.weight, 0);
+
+    // Determine which hobby is selected based on weights
+
+    const spins = 20;
+    const newRotation = spins * 360 * Math.random() + rotation;
     setRotation(newRotation);
     setTimeout(() => {
       const normalizedRotation = newRotation % 360;
 
       // Calculate the selected slice based on the normalized rotation
       // The arrow points to the right (90 degrees), so we adjust the calculation
-      const selectedSlice =
-        Math.floor((360 - normalizedRotation) / (360 / hobbies.length)) %
-        hobbies.length;
+
+      let cumulativeWeight = 0;
+      let selectedHobbyIndex = 0;
+      for (let i = 0; i < hobbies.length; i++) {
+        const startAngle = (cumulativeWeight / totalWeight) * 360;
+        const endAngle =
+          ((cumulativeWeight + hobbies[i].weight) / totalWeight) * 360;
+
+        // Check if the effective rotation falls within this slice
+        if (
+          normalizedRotation >= 360 - endAngle &&
+          normalizedRotation < 360 - startAngle
+        ) {
+          selectedHobbyIndex = i;
+          break;
+        }
+
+        cumulativeWeight += hobbies[i].weight;
+      }
+      console.log(
+        `cumulative * 360 / totalWeight: ${
+          cumulativeWeight * (360 / totalWeight)
+        }`,
+        `normalizedRotation: ${normalizedRotation}`,
+        360 / totalWeight
+      );
 
       // Set the selected hobby
-      setSelectedHobby(hobbies[selectedSlice]);
+      setSelectedHobby(hobbies[selectedHobbyIndex].name);
     }, 2000);
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100 p-4">
       <h1 className="text-3xl font-bold mb-4">Hobby Wheel</h1>
+
       <div
         className={`fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ${
           isEditing ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="p-4">
+          <button
+            onClick={() => setIsEditing(false)}
+            className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+          >
+            ✕
+          </button>
           <h2 className="text-xl font-bold mb-4">Edit Hobbies</h2>
 
           {/* Add Hobby Input */}
@@ -77,7 +125,16 @@ function App() {
                 key={index}
                 className="flex justify-between items-center mb-2"
               >
-                <span>{hobby}</span>
+                <span>{hobby.name}</span>
+                <input
+                  type="number"
+                  value={hobby.weight}
+                  onChange={(e) =>
+                    updateHobbyWeight(index, parseInt(e.target.value, 10))
+                  }
+                  className="w-16 px-2 py-1 border rounded text-center"
+                  min="1"
+                />
                 <button
                   onClick={() => removeHobby(index)}
                   className="px-2 py-1 bg-red-500 text-white rounded"
@@ -89,6 +146,7 @@ function App() {
           </ul>
         </div>
       </div>
+
       <Wheel hobbies={hobbies} rotation={rotation} />
       <div className="flex gap-2">
         <button
