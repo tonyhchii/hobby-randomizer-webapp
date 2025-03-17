@@ -64,7 +64,7 @@ function Wheel({ hobbies, rotation, size = 400 }: WheelProps) {
                   fontWeight="bold"
                   textAnchor="middle"
                   alignmentBaseline="middle"
-                  transform={`rotate(${midAngle}, ${textX}, ${textY})`}
+                  transform={`rotate(${-rotation}, ${textX}, ${textY})`}
                 >
                   {hobby.name}
                 </text>
