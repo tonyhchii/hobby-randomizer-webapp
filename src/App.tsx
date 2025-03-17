@@ -6,20 +6,23 @@ function App() {
     const savedHobbies = localStorage.getItem("hobbies");
     return savedHobbies ? JSON.parse(savedHobbies) : [];
   });
-  const [input, setInput] = useState<string>("");
   const [rotation, setRotation] = useState<number>(0);
   const [selectedHobby, setSelectedHobby] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false); // State to control side tab visibility
 
   // Save hobbies to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("hobbies", JSON.stringify(hobbies));
   }, [hobbies]);
 
-  const addHobby = () => {
-    if (input.trim() && !hobbies.includes(input.trim())) {
-      setHobbies([...hobbies, input.trim()]);
-      setInput("");
+  const addHobby = (hobby: string) => {
+    if (hobby.trim()) {
+      setHobbies((prevHobbies) => [...prevHobbies, hobby.trim()]);
     }
+  };
+
+  const removeHobby = (index: number) => {
+    setHobbies((prevHobbies) => prevHobbies.filter((_, i) => i !== index));
   };
 
   const spinWheel = () => {
@@ -46,28 +49,61 @@ function App() {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-100 p-4">
       <h1 className="text-3xl font-bold mb-4">Hobby Wheel</h1>
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          className="border p-2 rounded-md w-64"
-          placeholder="Enter a hobby"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <button
-          onClick={addHobby}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md"
-        >
-          Add Hobby
-        </button>
+      <div
+        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ${
+          isEditing ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="p-4">
+          <h2 className="text-xl font-bold mb-4">Edit Hobbies</h2>
+
+          {/* Add Hobby Input */}
+          <input
+            type="text"
+            placeholder="Add a new hobby"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && e.currentTarget.value.trim()) {
+                addHobby(e.currentTarget.value.trim());
+                e.currentTarget.value = "";
+              }
+            }}
+            className="w-full px-2 py-1 border rounded mb-4"
+          />
+
+          {/* List of Hobbies */}
+          <ul>
+            {hobbies.map((hobby, index) => (
+              <li
+                key={index}
+                className="flex justify-between items-center mb-2"
+              >
+                <span>{hobby}</span>
+                <button
+                  onClick={() => removeHobby(index)}
+                  className="px-2 py-1 bg-red-500 text-white rounded"
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
       <Wheel hobbies={hobbies} rotation={rotation} />
-      <button
-        onClick={spinWheel}
-        className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md"
-      >
-        Spin the Wheel
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Edit Hobbies
+        </button>
+        <button
+          onClick={spinWheel}
+          className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md"
+        >
+          Spin the Wheel
+        </button>
+      </div>
       {selectedHobby && (
         <p className="mt-4 text-xl font-semibold">
           Selected Hobby: {selectedHobby}
