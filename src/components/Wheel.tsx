@@ -6,8 +6,25 @@ interface WheelProps {
   size?: number; // Optional size prop to adjust the wheel size
 }
 
-function Wheel({ hobbies, rotation, size = 400 }: WheelProps) {
+function Wheel({ hobbies, rotation, size = 500 }: WheelProps) {
   const totalWeight = hobbies.reduce((sum, hobby) => sum + hobby.weight, 0);
+
+  const wrapText = (text: string, maxLineLength: number): string[] => {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      if (currentLine.length + words[i].length + 1 <= maxLineLength) {
+        currentLine += " " + words[i];
+      } else {
+        lines.push(currentLine);
+        currentLine = words[i];
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  };
 
   return (
     <div className="relative flex items-center justify-center">
@@ -47,6 +64,9 @@ function Wheel({ hobbies, rotation, size = 400 }: WheelProps) {
             const textX = 50 + 30 * Math.cos((Math.PI * midAngle) / 180);
             const textY = 50 + 30 * Math.sin((Math.PI * midAngle) / 180);
 
+            const wrappedText = wrapText(hobby.name, 10); // Adjust maxLineLength as needed
+            const lineHeight = 4;
+
             // Create a JSX element for the slice
             const slice = (
               <g key={index} data-weight={hobby.weight}>
@@ -66,7 +86,15 @@ function Wheel({ hobbies, rotation, size = 400 }: WheelProps) {
                   alignmentBaseline="middle"
                   transform={`rotate(${-rotation}, ${textX}, ${textY})`}
                 >
-                  {hobby.name}
+                  {wrappedText.map((line, i) => (
+                    <tspan
+                      key={i}
+                      x={textX}
+                      dy={i === 0 ? 0 : lineHeight} // Adjust vertical spacing between lines
+                    >
+                      {line}
+                    </tspan>
+                  ))}
                 </text>
               </g>
             );
