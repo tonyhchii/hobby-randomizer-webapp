@@ -47,8 +47,9 @@ function App() {
 
     // Determine which hobby is selected based on weights
 
-    const spins = 20;
-    const newRotation = spins * 360 * Math.random() + rotation;
+    const spins = 10;
+    const newRotation =
+      (spins / 2) * 360 + spins * 360 * Math.random() + rotation;
     setRotation(newRotation);
     setTimeout(() => {
       const normalizedRotation = newRotation % 360;
