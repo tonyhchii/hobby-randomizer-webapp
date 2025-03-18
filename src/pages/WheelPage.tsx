@@ -126,22 +126,24 @@ function WheelPage() {
                 key={index}
                 className="flex justify-between items-center mb-2"
               >
-                <span>{hobby.name}</span>
-                <input
-                  type="number"
-                  value={hobby.weight}
-                  onChange={(e) =>
-                    updateHobbyWeight(index, parseInt(e.target.value, 10))
-                  }
-                  className="w-16 px-2 py-1 border rounded text-center"
-                  min="1"
-                />
-                <button
-                  onClick={() => removeHobby(index)}
-                  className="px-2 py-1 bg-red-500 text-white rounded"
-                >
-                  Delete
-                </button>
+                <span className="flex-1 break-words mr-2">{hobby.name}</span>
+                <div className="flex gap-1">
+                  <input
+                    type="number"
+                    value={hobby.weight}
+                    onChange={(e) =>
+                      updateHobbyWeight(index, parseInt(e.target.value, 10))
+                    }
+                    className="w-12 px-1 py-1 border rounded text-center"
+                    min="1"
+                  />
+                  <button
+                    onClick={() => removeHobby(index)}
+                    className="px-2 py-1 bg-red-500 text-white rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
